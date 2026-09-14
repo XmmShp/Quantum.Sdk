@@ -193,3 +193,19 @@ jobs:
         if: steps.version.outputs.publish == 'true' && steps.npm.outputs.exists != 'true' && env.NPM_TOKEN == ''
         working-directory: typescript
         run: npm publish --access public --tag "${{ steps.version.outputs.npm_tag }}"
+
+      - name: Verify npm package is publicly available
+        if: steps.version.outputs.publish == 'true' && steps.npm.outputs.exists != 'true'
+        shell: bash
+        run: |
+          package='@io7/quantum-plugin-sdk@${{ steps.version.outputs.version }}'
+          for attempt in {1..18}; do
+            if published="$(npm view "$package" version --registry=https://registry.npmjs.org/ 2>/dev/null)"; then
+              echo "Verified $package on the public npm registry: $published"
+              exit 0
+            fi
+            echo "Waiting for $package to become publicly available (${attempt}/18)..."
+            sleep 10
+          done
+          echo "::error::$package was accepted by npm publish but is still unavailable from the public registry."
+          exit 1
