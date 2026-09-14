@@ -187,10 +187,13 @@ Web 插件章节。
 ## 版本与发布
 
 两个包始终发布相同版本。main 的普通提交产生
-`<next-patch>-nightly.<UTC YYYYMMDD>.<GitHub run number>.<run attempt>`；main 上的 `v1.2.3`
+`<next-patch>-nightly.<UTC YYYYMMDD>.<GitHub run number>`；同一 workflow run 的重跑保持版本不变。main 上的 `v1.2.3`
 或 `1.2.3` tag 发布对应稳定版，SemVer 预发布 tag 发布到 npm 的 `next` dist-tag。为保证 NuGet 与 npm
 包身份一致，发布 tag 不接受 SemVer build metadata（`+metadata`）。非 main 提交上的 tag 不发布，且候选版本
 低于任一注册表中已发布的最高版本时工作流会拒绝发布。
+
+如果某个注册表在另一个成功后失败，可手动运行 `Publish SDK packages`，输入已发布的确切版本；工作流会跳过
+已有包并补齐缺失的注册表版本。提交信息包含 `[skip publish]` 时，main push 不发布包。
 
 发布工作流支持注册表 OIDC Trusted Publishing，也支持首次创建包时使用仓库 secret `NPM_TOKEN` 和
 `NUGET_API_KEY` 引导。完成首次发布后应删除长期 token，并配置：

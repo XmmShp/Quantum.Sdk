@@ -4,6 +4,12 @@ on:
   push:
     branches: ["main"]
     tags: ["*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact existing version to recover on a missing registry
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -20,6 +26,7 @@ env:
 
 jobs:
   publish:
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip publish]')
     runs-on: ubuntu-latest
     environment: release
     steps:
@@ -45,6 +52,8 @@ jobs:
 
       - name: Compute package version
         id: version
+        env:
+          RECOVERY_VERSION: ${{ inputs.version }}
         run: node scripts/compute-version.mjs
 
       - name: Explain skipped tag

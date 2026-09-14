@@ -49,7 +49,7 @@ export function compareVersions(left, right) {
   return 0;
 }
 
-export function computeNightlyVersion(tags, initialVersion, date, runNumber, runAttempt) {
+export function computeNightlyVersion(tags, initialVersion, date, runNumber) {
   const tagged = tags
     .map(tag => tag.replace(/^v/, ""))
     .map(parseVersion)
@@ -63,7 +63,7 @@ export function computeNightlyVersion(tags, initialVersion, date, runNumber, run
     ? initial
     : { ...tagged.at(-1), patch: tagged.at(-1).patch + 1n };
 
-  return `${base.major}.${base.minor}.${base.patch}-nightly.${date}.${runNumber}.${runAttempt}`;
+  return `${base.major}.${base.minor}.${base.patch}-nightly.${date}.${runNumber}`;
 }
 
 function output(name, value) {
@@ -75,6 +75,17 @@ function output(name, value) {
 }
 
 function main() {
+  const recoveryVersion = process.env.RECOVERY_VERSION?.trim();
+  if (recoveryVersion) {
+    const version = parseVersion(recoveryVersion);
+    if (!version) throw new Error(`Invalid recovery version: ${recoveryVersion}`);
+    output("publish", "true");
+    output("version", version.value);
+    output("channel", "recovery");
+    output("npm_tag", version.prerelease?.startsWith("nightly.") ? "nightly" : (version.prerelease ? "next" : "latest"));
+    return;
+  }
+
   const refType = process.env.GITHUB_REF_TYPE ?? "branch";
   const refName = process.env.GITHUB_REF_NAME ?? "main";
 
@@ -117,7 +128,6 @@ function main() {
     packageJson.version,
     date,
     process.env.GITHUB_RUN_NUMBER ?? "0",
-    process.env.GITHUB_RUN_ATTEMPT ?? "1",
   );
 
   output("publish", "true");

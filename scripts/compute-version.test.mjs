@@ -4,15 +4,15 @@ import { compareVersions, computeNightlyVersion, parseVersion } from "./compute-
 
 test("uses the package core before the first stable tag", () => {
   assert.equal(
-    computeNightlyVersion([], "0.1.0-alpha.1", "20260914", "42", "1"),
-    "0.1.0-nightly.20260914.42.1",
+    computeNightlyVersion([], "0.1.0-alpha.1", "20260914", "42"),
+    "0.1.0-nightly.20260914.42",
   );
 });
 
 test("increments patch after the greatest SemVer tag", () => {
   assert.equal(
-    computeNightlyVersion(["v1.3.9", "1.4.0", "v2.0.0-rc.1"], "0.1.0", "20260914", "43", "2"),
-    "2.0.1-nightly.20260914.43.2",
+    computeNightlyVersion(["v1.3.9", "1.4.0", "v2.0.0-rc.1"], "0.1.0", "20260914", "43"),
+    "2.0.1-nightly.20260914.43",
   );
 });
 
