@@ -166,8 +166,11 @@ jobs:
         shell: bash
         run: |
           identity="$(npm whoami --registry=https://registry.npmjs.org/)"
-          members="$(npm org ls quantum --json --registry=https://registry.npmjs.org/)"
           echo "NPM_TOKEN authenticates as: ${identity}"
+          if ! members="$(npm org ls quantum --json --registry=https://registry.npmjs.org/)"; then
+            echo '::error::NPM_TOKEN is valid but cannot access the quantum npm organization. Grant the token Organizations read/write access to quantum in addition to Packages and scopes read/write access.'
+            exit 1
+          fi
           NPM_IDENTITY="$identity" NPM_ORG_MEMBERS="$members" node --input-type=module -e '
             const identity = process.env.NPM_IDENTITY;
             const members = JSON.parse(process.env.NPM_ORG_MEMBERS ?? "{}");
