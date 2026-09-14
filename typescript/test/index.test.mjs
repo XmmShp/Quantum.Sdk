@@ -7,6 +7,7 @@ import {
   SemanticVersion,
   VersionRange
 } from "../dist/index.js";
+import { readFile } from "node:fs/promises";
 
 test("definePlugin preserves the lifecycle definition", () => {
   const definition = {
@@ -15,6 +16,14 @@ test("definePlugin preserves the lifecycle definition", () => {
   };
 
   assert.equal(definePlugin(definition), definition);
+});
+
+test("RPC catalog types and helper are part of the public declarations", async () => {
+  const declarations = await readFile(new URL("../dist/index.d.ts", import.meta.url), "utf8");
+
+  assert.match(declarations, /interface QuantumRpcCatalog/);
+  assert.match(declarations, /catalogRpcName: "quantum\.rpc\.catalog"/);
+  assert.match(declarations, /catalog\(options\?: QuantumRpcOptions\): Promise<QuantumResult<QuantumRpcCatalog>>/);
 });
 
 test("QuantumTopic.of validates the dot-delimited value object", () => {

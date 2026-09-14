@@ -62,6 +62,18 @@ if (!result.isSuccess) {
 console.log(result.value);
 ```
 
+未来的 AI 工具或动态调用器可以直接发现当前 Host 的全部 RPC：
+
+```ts
+const catalog = await context.rpc.catalog({ signal: context.signal });
+if (catalog.isSuccess) {
+  console.log(catalog.value.services);
+}
+```
+
+目录包含可调用名称、Alias、输入/输出 JSON Schema 和完整 Attribute 元数据；.NET 的
+`DescriptionAttribute` 会成为对应服务、方法或 Schema 节点的 `description`。
+
 The same method can be addressed by its short `service.method` name or any method-level alias. Names are
 case-insensitive. When multiple plugins implement a short name or alias, the Host logs the collision and selects
 the implementation whose normalized plugin id is lexicographically smallest using ordinal comparison. A missing

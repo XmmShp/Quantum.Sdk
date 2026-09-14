@@ -454,6 +454,49 @@ export interface QuantumEnvironmentSnapshot {
 
 export type QuantumRpcContext = Readonly<Record<string, unknown>>;
 
+export interface QuantumRpcAttributeArgument {
+  readonly type: string;
+  readonly value: unknown;
+}
+
+export interface QuantumRpcAttribute {
+  readonly type: string;
+  readonly constructorArguments: readonly QuantumRpcAttributeArgument[];
+  readonly namedArguments: Readonly<Record<string, QuantumRpcAttributeArgument>>;
+}
+
+export interface QuantumRpcMethodInfo {
+  readonly qualifiedName: string;
+  readonly canonicalName: string;
+  readonly aliases: readonly string[];
+  readonly declaration: string;
+  readonly methodName: string;
+  readonly description?: string | null;
+  readonly requestType: string;
+  readonly responseType?: string | null;
+  readonly returnsValue: boolean;
+  readonly inputSchema: Readonly<Record<string, unknown>>;
+  readonly outputSchema: Readonly<Record<string, unknown>>;
+  readonly attributes: readonly QuantumRpcAttribute[];
+  readonly parameterAttributes: readonly QuantumRpcAttribute[];
+  readonly returnAttributes: readonly QuantumRpcAttribute[];
+}
+
+export interface QuantumRpcServiceInfo {
+  readonly pluginId: string;
+  readonly serviceName: string;
+  readonly serviceType: string;
+  readonly description?: string | null;
+  readonly attributes: readonly QuantumRpcAttribute[];
+  readonly methods: readonly QuantumRpcMethodInfo[];
+}
+
+export interface QuantumRpcCatalog {
+  readonly schemaVersion: number;
+  readonly catalogRpcName: "quantum.rpc.catalog";
+  readonly services: readonly QuantumRpcServiceInfo[];
+}
+
 export type QuantumResult<TResponse = undefined> =
   | {
       readonly isSuccess: true;
@@ -476,6 +519,7 @@ export interface QuantumRpcInvoker {
     context?: QuantumRpcContext,
     options?: QuantumRpcOptions
   ): Promise<QuantumResult<TResponse>>;
+  catalog(options?: QuantumRpcOptions): Promise<QuantumResult<QuantumRpcCatalog>>;
 }
 
 export interface QuantumPluginContext {

@@ -1,4 +1,5 @@
 using NOF.Contract;
+using System.Text.Json;
 using Xunit;
 
 namespace Quantum.Plugin.Abstraction.Tests;
@@ -43,6 +44,48 @@ public sealed class PluginRpcContractTests
             method.GetCustomAttributes(typeof(RpcInvocationAliasAttribute), false)
                 .Cast<RpcInvocationAliasAttribute>()
                 .Select(static attribute => attribute.Name));
+    }
+
+    [Fact]
+    public async Task CatalogHelperUsesTheBuiltInDiscoveryRpc()
+    {
+        var invoker = new RecordingRpcInvoker();
+
+        var result = await invoker.GetCatalogAsync(CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(QuantumRpcCatalogExtensions.CatalogRpcName, invoker.RpcName);
+        Assert.Equal(Context.Empty, invoker.Context);
+        Assert.Equal("{}", JsonSerializer.Serialize(invoker.Payload));
+    }
+
+    private sealed class RecordingRpcInvoker : IRpcInvoker
+    {
+        public string? RpcName { get; private set; }
+
+        public object? Payload { get; private set; }
+
+        public Context? Context { get; private set; }
+
+        public Task<Result<TResponse>> InvokeAsync<TResponse>(
+            string rpcName,
+            object payload,
+            Context context,
+            CancellationToken cancellationToken = default)
+        {
+            RpcName = rpcName;
+            Payload = payload;
+            Context = context;
+            object catalog = new QuantumRpcCatalog(1, rpcName, []);
+            return Task.FromResult(Result.Success((TResponse)catalog));
+        }
+
+        public Task<Result> InvokeAsync(
+            string rpcName,
+            object payload,
+            Context context,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(Result.Success());
     }
 }
 

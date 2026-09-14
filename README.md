@@ -56,6 +56,16 @@ var result = await services.GetRequiredService<IRpcInvoker>().InvokeAsync<Note[]
 始终经过 JSON 边界；每次调用在目标插件中创建独立 scope，结果序列化完成后释放。manifest 的 `dependencies` 与
 `integrations` 不构成 RPC 权限，只描述加载约束或软排序关系。
 
+需要向 AI 工具或动态调用器导出当前能力时，可读取 Host 的内置 RPC 目录：
+
+```csharp
+var result = await services.GetRequiredService<IRpcInvoker>()
+    .GetCatalogAsync(cancellationToken);
+```
+
+目录包含每个服务与方法的可调用名称、Alias、输入/输出 JSON Schema，以及服务、方法、参数、返回值、DTO 类型和属性上的
+全部 Attribute。`DescriptionAttribute` 同时会映射到对应目录或 Schema 节点的 `description`。
+
 ## 插件标识与版本值对象
 
 `QuantumPluginInfo.Id` 和 `QuantumPluginInfo.Version` 分别是 `PluginId` 与 `SemanticVersion`，不再是未校验的

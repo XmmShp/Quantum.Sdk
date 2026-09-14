@@ -1,3 +1,4 @@
+using System.Text.Json;
 using NOF.Contract;
 
 namespace Quantum.Plugin.Abstraction;
@@ -61,6 +62,62 @@ public interface IRpcInvoker
         object payload,
         Context context,
         CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// A serializable snapshot of every RPC method currently available through Quantum.
+/// </summary>
+public sealed record QuantumRpcCatalog(
+    int SchemaVersion,
+    string CatalogRpcName,
+    IReadOnlyList<QuantumRpcServiceInfo> Services);
+
+public sealed record QuantumRpcServiceInfo(
+    string PluginId,
+    string ServiceName,
+    string ServiceType,
+    string? Description,
+    IReadOnlyList<QuantumRpcAttributeInfo> Attributes,
+    IReadOnlyList<QuantumRpcMethodInfo> Methods);
+
+public sealed record QuantumRpcMethodInfo(
+    string QualifiedName,
+    string CanonicalName,
+    IReadOnlyList<string> Aliases,
+    string Declaration,
+    string MethodName,
+    string? Description,
+    string RequestType,
+    string? ResponseType,
+    bool ReturnsValue,
+    JsonElement InputSchema,
+    JsonElement OutputSchema,
+    IReadOnlyList<QuantumRpcAttributeInfo> Attributes,
+    IReadOnlyList<QuantumRpcAttributeInfo> ParameterAttributes,
+    IReadOnlyList<QuantumRpcAttributeInfo> ReturnAttributes);
+
+public sealed record QuantumRpcAttributeInfo(
+    string Type,
+    IReadOnlyList<QuantumRpcAttributeArgumentInfo> ConstructorArguments,
+    IReadOnlyDictionary<string, QuantumRpcAttributeArgumentInfo> NamedArguments);
+
+public sealed record QuantumRpcAttributeArgumentInfo(string Type, JsonElement Value);
+
+public static class QuantumRpcCatalogExtensions
+{
+    public const string CatalogRpcName = "quantum.rpc.catalog";
+
+    public static Task<Result<QuantumRpcCatalog>> GetCatalogAsync(
+        this IRpcInvoker invoker,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(invoker);
+        return invoker.InvokeAsync<QuantumRpcCatalog>(
+            CatalogRpcName,
+            new { },
+            Context.Empty,
+            cancellationToken);
+    }
 }
 
 /// <summary>
