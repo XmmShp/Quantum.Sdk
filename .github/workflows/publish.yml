@@ -199,12 +199,12 @@ jobs:
         shell: bash
         run: |
           package='@io7/quantum-plugin-sdk@${{ steps.version.outputs.version }}'
-          for attempt in {1..18}; do
+          for attempt in {1..90}; do
             if published="$(npm view "$package" version --registry=https://registry.npmjs.org/ 2>/dev/null)"; then
               echo "Verified $package on the public npm registry: $published"
               exit 0
             fi
-            echo "Waiting for $package to become publicly available (${attempt}/18)..."
+            echo "Waiting for $package to become publicly available (${attempt}/90)..."
             sleep 10
           done
           echo "::error::$package was accepted by npm publish but is still unavailable from the public registry."
