@@ -159,6 +159,26 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Verify npm bootstrap identity
+        if: steps.version.outputs.publish == 'true' && steps.npm.outputs.exists != 'true' && env.NPM_TOKEN != ''
+        env:
+          NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
+        shell: bash
+        run: |
+          identity="$(npm whoami --registry=https://registry.npmjs.org/)"
+          members="$(npm org ls quantum --json --registry=https://registry.npmjs.org/)"
+          echo "NPM_TOKEN authenticates as: ${identity}"
+          NPM_IDENTITY="$identity" NPM_ORG_MEMBERS="$members" node --input-type=module -e '
+            const identity = process.env.NPM_IDENTITY;
+            const members = JSON.parse(process.env.NPM_ORG_MEMBERS ?? "{}");
+            const role = members[identity];
+            if (!role) {
+              console.error(`::error::NPM_TOKEN authenticates as ${identity}, which is not a member of the quantum npm organization.`);
+              process.exit(1);
+            }
+            console.log(`NPM_TOKEN quantum organization role: ${role}`);
+          '
+
       - name: Publish npm package with bootstrap token
         if: steps.version.outputs.publish == 'true' && steps.npm.outputs.exists != 'true' && env.NPM_TOKEN != ''
         working-directory: typescript
