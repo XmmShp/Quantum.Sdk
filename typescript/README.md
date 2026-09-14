@@ -2,7 +2,7 @@
 
 > **Experimental:** JavaScript/TypeScript plugin development is still experimental. Many capabilities are not yet available, so it is not recommended as the primary development path. Prefer the .NET SDK for the current release.
 
-`@quantum/plugin-sdk` provides the typed lifecycle and host-capability contract for Quantum Web plugins.
+`@io7/quantum-plugin-sdk` provides the typed lifecycle and host-capability contract for Quantum Web plugins.
 Web plugins execute in a dedicated sandboxed iframe. The iframe is destroyed on unload, so timers, DOM state,
 module globals, and event handlers cannot leak into the next runtime generation.
 
@@ -11,7 +11,7 @@ no TypeScript equivalent. Web plugins do not own a .NET DI container; use `activ
 runtime state and lifecycle, and consume Host capabilities through the supplied context.
 
 ```ts
-import { definePlugin, QuantumTopic } from "@quantum/plugin-sdk";
+import { definePlugin, QuantumTopic } from "@io7/quantum-plugin-sdk";
 
 export default definePlugin({
   async activate(context) {
@@ -78,7 +78,7 @@ field reports target availability and version compatibility but does not authori
 Construct external values at the boundary instead of casting unchecked strings:
 
 ```ts
-import { PluginId, SemanticVersion, VersionRange } from "@quantum/plugin-sdk";
+import { PluginId, SemanticVersion, VersionRange } from "@io7/quantum-plugin-sdk";
 
 const pluginId = PluginId.of("Quantum.Plugin.Theme");
 const current = SemanticVersion.parse("2.1.0-rc.2+linux.arm64");

@@ -65,8 +65,8 @@ jobs:
         if: steps.version.outputs.publish == 'true'
         shell: bash
         run: |
-          if ! npm view '@quantum/plugin-sdk' name >/dev/null 2>&1 && [[ -z "$NPM_TOKEN" ]]; then
-            echo '::error::NPM_TOKEN is required for the first @quantum/plugin-sdk publish.'
+          if ! npm view '@io7/quantum-plugin-sdk' name >/dev/null 2>&1 && [[ -z "$NPM_TOKEN" ]]; then
+            echo '::error::NPM_TOKEN is required for the first @io7/quantum-plugin-sdk publish.'
             exit 1
           fi
 
@@ -74,7 +74,7 @@ jobs:
         if: steps.version.outputs.publish == 'true'
         shell: bash
         run: |
-          npm view '@quantum/plugin-sdk' versions --json > "$RUNNER_TEMP/npm-versions.json" 2>/dev/null \
+          npm view '@io7/quantum-plugin-sdk' versions --json > "$RUNNER_TEMP/npm-versions.json" 2>/dev/null \
             || echo '[]' > "$RUNNER_TEMP/npm-versions.json"
           curl --fail --silent 'https://api.nuget.org/v3-flatcontainer/quantum.plugin.abstraction/index.json' \
             > "$RUNNER_TEMP/nuget-versions.json" \
@@ -153,7 +153,7 @@ jobs:
         id: npm
         shell: bash
         run: |
-          if npm view "@quantum/plugin-sdk@${{ steps.version.outputs.version }}" version >/dev/null 2>&1; then
+          if npm view "@io7/quantum-plugin-sdk@${{ steps.version.outputs.version }}" version >/dev/null 2>&1; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
@@ -167,8 +167,8 @@ jobs:
         run: |
           identity="$(npm whoami --registry=https://registry.npmjs.org/)"
           echo "NPM_TOKEN authenticates as: ${identity}"
-          if ! members="$(npm org ls quantum --json --registry=https://registry.npmjs.org/)"; then
-            echo '::error::NPM_TOKEN is valid but cannot access the quantum npm organization. Grant the token Organizations read/write access to quantum in addition to Packages and scopes read/write access.'
+          if ! members="$(npm org ls io7 --json --registry=https://registry.npmjs.org/)"; then
+            echo '::error::NPM_TOKEN is valid but cannot access the io7 npm organization. Grant the token Organizations read/write access to io7 in addition to Packages and scopes read/write access.'
             exit 1
           fi
           NPM_IDENTITY="$identity" NPM_ORG_MEMBERS="$members" node --input-type=module -e '
@@ -176,10 +176,10 @@ jobs:
             const members = JSON.parse(process.env.NPM_ORG_MEMBERS ?? "{}");
             const role = members[identity];
             if (!role) {
-              console.error(`::error::NPM_TOKEN authenticates as ${identity}, which is not a member of the quantum npm organization.`);
+              console.error(`::error::NPM_TOKEN authenticates as ${identity}, which is not a member of the io7 npm organization.`);
               process.exit(1);
             }
-            console.log(`NPM_TOKEN quantum organization role: ${role}`);
+            console.log(`NPM_TOKEN io7 organization role: ${role}`);
           '
 
       - name: Publish npm package with bootstrap token

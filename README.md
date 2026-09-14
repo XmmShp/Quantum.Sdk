@@ -1,7 +1,7 @@
 # Quantum Plugin SDK
 
 本仓库包含保持能力一致的 .NET 与 TypeScript Quantum Plugin SDK。`Quantum.Plugin.Abstraction` 是桌面宿主与
-本地 DLL 插件共享的稳定 ABI；`@quantum/plugin-sdk` 是隔离 Web 插件的 Host transport 契约。
+本地 DLL 插件共享的稳定 ABI；`@io7/quantum-plugin-sdk` 是隔离 Web 插件的 Host transport 契约。
 
 生产插件应引用发布后的 `Quantum.Plugin.Abstraction` NuGet 包。仓库内的样例使用项目引用，以便 SDK、宿主与样例一起构建和验证。
 
