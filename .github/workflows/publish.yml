@@ -49,7 +49,8 @@ jobs:
 
       - name: Explain skipped tag
         if: steps.version.outputs.publish != 'true'
-        run: echo "Skipping publish: ${{ steps.version.outputs.reason }}"
+        run: |
+          echo "Skipping publish: ${{ steps.version.outputs.reason }}"
 
       - name: Validate first-publish credentials
         if: steps.version.outputs.publish == 'true'
