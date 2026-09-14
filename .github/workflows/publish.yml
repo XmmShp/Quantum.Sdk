@@ -209,14 +209,3 @@ jobs:
           done
           echo "::error::$package was accepted by npm publish but is still unavailable from the public registry."
           exit 1
-
-      - name: Keep nightly releases off the latest tag
-        if: steps.version.outputs.publish == 'true' && steps.version.outputs.npm_tag == 'nightly' && env.NPM_TOKEN != ''
-        env:
-          NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
-        shell: bash
-        run: |
-          latest="$(npm view '@io7/quantum-plugin-sdk' dist-tags.latest --registry=https://registry.npmjs.org/ 2>/dev/null || true)"
-          if [[ "$latest" == '${{ steps.version.outputs.version }}' ]]; then
-            npm dist-tag rm '@io7/quantum-plugin-sdk' latest --registry=https://registry.npmjs.org/
-          fi
