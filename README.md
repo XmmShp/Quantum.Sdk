@@ -1,6 +1,7 @@
-# Quantum .NET Plugin SDK
+# Quantum Plugin SDK
 
-`Quantum.Plugin.Abstraction` 是 Quantum 唯一的插件 SDK，也是桌面宿主与本地 DLL 插件共享的稳定 ABI。
+本仓库包含保持能力一致的 .NET 与 TypeScript Quantum Plugin SDK。`Quantum.Plugin.Abstraction` 是桌面宿主与
+本地 DLL 插件共享的稳定 ABI；`@quantum/plugin-sdk` 是隔离 Web 插件的 Host transport 契约。
 
 生产插件应引用发布后的 `Quantum.Plugin.Abstraction` NuGet 包。仓库内的样例使用项目引用，以便 SDK、宿主与样例一起构建和验证。
 
@@ -99,7 +100,7 @@ precedence 参与范围比较，构建元数据完全不参与比较。
 
 数据库 schema 演进不属于 .NET ABI。插件可以在开发期使用 EF/NOF 模型，但发布包统一通过
 `plugin.json` 的 `database.migrations` 携带 SQLite SQL artifact；Host 在 `StartAsync` 前应用它。具体规则见
-[插件开发指南](../docs/plugin-development.md#6-提供静态资源和-web-贡献)。
+[插件开发指南](https://github.com/XmmShp/Quantum/blob/main/docs/plugin-development.md#6-提供静态资源和-web-贡献)。
 
 ## Topic EventBus
 
@@ -182,3 +183,16 @@ RPC 调用方只持有 Host 提供的 `IRpcInvoker`，不会缓存目标 provide
 纯 JavaScript/TypeScript 插件使用同级目录中的 `typescript` SDK。该 SDK 提供与 .NET 共用的 Topic EventBus，以及
 隔离 iframe 生命周期、路由挂载、资源、导航、环境信息和同一套名称路由 RPC；详细说明见插件开发文档中的
 Web 插件章节。
+
+## 版本与发布
+
+两个包始终发布相同版本。main 的普通提交产生
+`<next-patch>-nightly.<UTC YYYYMMDD>.<GitHub run number>.<run attempt>`；main 上的 `v1.2.3`
+或 `1.2.3` tag 发布对应稳定版，SemVer 预发布 tag 发布到 npm 的 `next` dist-tag。为保证 NuGet 与 npm
+包身份一致，发布 tag 不接受 SemVer build metadata（`+metadata`）。非 main 提交上的 tag 不发布。
+
+发布工作流支持注册表 OIDC Trusted Publishing，也支持首次创建包时使用仓库 secret `NPM_TOKEN` 和
+`NUGET_API_KEY` 引导。完成首次发布后应删除长期 token，并配置：
+
+- npm trusted publisher：仓库 `XmmShp/Quantum.Sdk`，workflow `publish.yml`，environment `release`。
+- NuGet trusted publishing：相同仓库、workflow 和 environment；仓库变量 `NUGET_USER` 设置为 NuGet 用户名。

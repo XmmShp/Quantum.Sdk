@@ -25,10 +25,15 @@
     "typescript"
   ],
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/XmmShp/Quantum"
+    "url": "https://github.com/XmmShp/Quantum.Sdk.git"
   },
+  "homepage": "https://github.com/XmmShp/Quantum.Sdk#readme",
+  "bugs": "https://github.com/XmmShp/Quantum.Sdk/issues",
   "devDependencies": {
     "typescript": "5.9.2"
   }

@@ -8,9 +8,12 @@
     <Description>The stable .NET plugin ABI for Quantum.</Description>
     <Version>0.1.0-alpha.1</Version>
     <Authors>Quantum contributors</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>quantum;plugin;sdk</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <RepositoryUrl>https://github.com/XmmShp/Quantum</RepositoryUrl>
+    <RepositoryUrl>https://github.com/XmmShp/Quantum.Sdk</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 

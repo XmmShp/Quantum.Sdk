@@ -1,0 +1,148 @@
+name: Publish SDK packages
+
+on:
+  push:
+    branches: ["main"]
+    tags: ["*"]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: sdk-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+  NUGET_USER: ${{ vars.NUGET_USER }}
+  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Fetch main for tag ancestry validation
+        run: git fetch --no-tags origin main:refs/remotes/origin/main
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Use an OIDC-capable npm CLI
+        run: npm install --global npm@^11.15.0
+
+      - name: Compute package version
+        id: version
+        run: node scripts/compute-version.mjs
+
+      - name: Explain skipped tag
+        if: steps.version.outputs.publish != 'true'
+        run: echo "Skipping publish: ${{ steps.version.outputs.reason }}"
+
+      - name: Validate first-publish credentials
+        if: steps.version.outputs.publish == 'true'
+        shell: bash
+        run: |
+          if ! npm view '@quantum/plugin-sdk' name >/dev/null 2>&1 && [[ -z "$NPM_TOKEN" ]]; then
+            echo '::error::NPM_TOKEN is required for the first @quantum/plugin-sdk publish.'
+            exit 1
+          fi
+          if ! curl --fail --silent 'https://api.nuget.org/v3-flatcontainer/quantum.plugin.abstraction/index.json' >/dev/null \
+            && [[ -z "$NUGET_API_KEY" && -z "$NUGET_USER" ]]; then
+            echo '::error::Set NUGET_API_KEY, or configure pending NuGet Trusted Publishing and set the NUGET_USER repository variable.'
+            exit 1
+          fi
+
+      - name: Test .NET SDK
+        if: steps.version.outputs.publish == 'true'
+        run: dotnet test Quantum.Sdk.slnx --configuration Release
+
+      - name: Install and test TypeScript SDK
+        if: steps.version.outputs.publish == 'true'
+        working-directory: typescript
+        run: |
+          npm ci
+          npm test
+
+      - name: Test version policy
+        if: steps.version.outputs.publish == 'true'
+        run: node --test scripts/compute-version.test.mjs
+
+      - name: Pack NuGet package
+        if: steps.version.outputs.publish == 'true'
+        run: >-
+          dotnet pack dotnet/src/Quantum.Plugin.Abstraction/Quantum.Plugin.Abstraction.csproj
+          --configuration Release
+          --no-restore
+          --output artifacts/nuget
+          -p:PackageVersion=${{ steps.version.outputs.version }}
+          -p:ContinuousIntegrationBuild=true
+
+      - name: Apply npm package version
+        if: steps.version.outputs.publish == 'true'
+        working-directory: typescript
+        run: npm version "${{ steps.version.outputs.version }}" --no-git-tag-version
+
+      - name: Check NuGet package
+        if: steps.version.outputs.publish == 'true'
+        id: nuget
+        shell: bash
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          if curl --fail --silent --head "https://api.nuget.org/v3-flatcontainer/quantum.plugin.abstraction/${version,,}/quantum.plugin.abstraction.${version,,}.nupkg" >/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: NuGet login with OIDC
+        if: steps.version.outputs.publish == 'true' && steps.nuget.outputs.exists != 'true' && env.NUGET_API_KEY == ''
+        uses: NuGet/login@v1
+        id: nuget-login
+        with:
+          user: ${{ env.NUGET_USER }}
+
+      - name: Publish NuGet package with bootstrap API key
+        if: steps.version.outputs.publish == 'true' && steps.nuget.outputs.exists != 'true' && env.NUGET_API_KEY != ''
+        shell: bash
+        run: dotnet nuget push "artifacts/nuget/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Publish NuGet package with OIDC
+        if: steps.version.outputs.publish == 'true' && steps.nuget.outputs.exists != 'true' && env.NUGET_API_KEY == ''
+        shell: bash
+        run: dotnet nuget push "artifacts/nuget/*.nupkg" --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Check npm package
+        if: steps.version.outputs.publish == 'true'
+        id: npm
+        shell: bash
+        run: |
+          if npm view "@quantum/plugin-sdk@${{ steps.version.outputs.version }}" version >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish npm package with bootstrap token
+        if: steps.version.outputs.publish == 'true' && steps.npm.outputs.exists != 'true' && env.NPM_TOKEN != ''
+        working-directory: typescript
+        env:
+          NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
+        run: npm publish --access public --provenance --tag "${{ steps.version.outputs.npm_tag }}"
+
+      - name: Publish npm package with OIDC
+        if: steps.version.outputs.publish == 'true' && steps.npm.outputs.exists != 'true' && env.NPM_TOKEN == ''
+        working-directory: typescript
+        run: npm publish --access public --tag "${{ steps.version.outputs.npm_tag }}"
