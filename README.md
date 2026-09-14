@@ -189,7 +189,8 @@ Web 插件章节。
 两个包始终发布相同版本。main 的普通提交产生
 `<next-patch>-nightly.<UTC YYYYMMDD>.<GitHub run number>.<run attempt>`；main 上的 `v1.2.3`
 或 `1.2.3` tag 发布对应稳定版，SemVer 预发布 tag 发布到 npm 的 `next` dist-tag。为保证 NuGet 与 npm
-包身份一致，发布 tag 不接受 SemVer build metadata（`+metadata`）。非 main 提交上的 tag 不发布。
+包身份一致，发布 tag 不接受 SemVer build metadata（`+metadata`）。非 main 提交上的 tag 不发布，且候选版本
+低于任一注册表中已发布的最高版本时工作流会拒绝发布。
 
 发布工作流支持注册表 OIDC Trusted Publishing，也支持首次创建包时使用仓库 secret `NPM_TOKEN` 和
 `NUGET_API_KEY` 引导。完成首次发布后应删除长期 token，并配置：

@@ -25,19 +25,43 @@ export function compareCore(left, right) {
   return 0;
 }
 
+export function compareVersions(left, right) {
+  const core = compareCore(left, right);
+  if (core !== 0) return core;
+  if (!left.prerelease && !right.prerelease) return 0;
+  if (!left.prerelease) return 1;
+  if (!right.prerelease) return -1;
+
+  const leftParts = left.prerelease.split(".");
+  const rightParts = right.prerelease.split(".");
+  for (let index = 0; index < Math.max(leftParts.length, rightParts.length); index += 1) {
+    if (leftParts[index] === undefined) return -1;
+    if (rightParts[index] === undefined) return 1;
+    if (leftParts[index] === rightParts[index]) continue;
+    const leftNumeric = /^\d+$/.test(leftParts[index]);
+    const rightNumeric = /^\d+$/.test(rightParts[index]);
+    if (leftNumeric && rightNumeric) {
+      return BigInt(leftParts[index]) < BigInt(rightParts[index]) ? -1 : 1;
+    }
+    if (leftNumeric !== rightNumeric) return leftNumeric ? -1 : 1;
+    return leftParts[index] < rightParts[index] ? -1 : 1;
+  }
+  return 0;
+}
+
 export function computeNightlyVersion(tags, initialVersion, date, runNumber, runAttempt) {
-  const stable = tags
+  const tagged = tags
     .map(tag => tag.replace(/^v/, ""))
     .map(parseVersion)
-    .filter(version => version && !version.prerelease)
-    .sort(compareCore);
+    .filter(Boolean)
+    .sort(compareVersions);
 
   const initial = parseVersion(initialVersion.replace(/^v/, ""));
   if (!initial) throw new Error(`Invalid initial version: ${initialVersion}`);
 
-  const base = stable.length === 0
+  const base = tagged.length === 0
     ? initial
-    : { ...stable.at(-1), patch: stable.at(-1).patch + 1n };
+    : { ...tagged.at(-1), patch: tagged.at(-1).patch + 1n };
 
   return `${base.major}.${base.minor}.${base.patch}-nightly.${date}.${runNumber}.${runAttempt}`;
 }

@@ -59,6 +59,20 @@ jobs:
             echo '::error::NPM_TOKEN is required for the first @quantum/plugin-sdk publish.'
             exit 1
           fi
+
+      - name: Enforce monotonically increasing versions
+        if: steps.version.outputs.publish == 'true'
+        shell: bash
+        run: |
+          npm view '@quantum/plugin-sdk' versions --json > "$RUNNER_TEMP/npm-versions.json" 2>/dev/null \
+            || echo '[]' > "$RUNNER_TEMP/npm-versions.json"
+          curl --fail --silent 'https://api.nuget.org/v3-flatcontainer/quantum.plugin.abstraction/index.json' \
+            > "$RUNNER_TEMP/nuget-versions.json" \
+            || echo '{"versions":[]}' > "$RUNNER_TEMP/nuget-versions.json"
+          node scripts/assert-version-increases.mjs \
+            "${{ steps.version.outputs.version }}" \
+            "$RUNNER_TEMP/npm-versions.json" \
+            "$RUNNER_TEMP/nuget-versions.json"
           if ! curl --fail --silent 'https://api.nuget.org/v3-flatcontainer/quantum.plugin.abstraction/index.json' >/dev/null \
             && [[ -z "$NUGET_API_KEY" && -z "$NUGET_USER" ]]; then
             echo '::error::Set NUGET_API_KEY, or configure pending NuGet Trusted Publishing and set the NUGET_USER repository variable.'
