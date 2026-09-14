@@ -117,7 +117,7 @@ jobs:
       - name: Apply npm package version
         if: steps.version.outputs.publish == 'true'
         working-directory: typescript
-        run: npm version "${{ steps.version.outputs.version }}" --no-git-tag-version
+        run: npm version "${{ steps.version.outputs.version }}" --no-git-tag-version --allow-same-version
 
       - name: Check NuGet package
         if: steps.version.outputs.publish == 'true'
